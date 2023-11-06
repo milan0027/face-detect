@@ -1,0 +1,49 @@
+body{
+    min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+}
+.homepage-btn{
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 2rem; 
+    flex-wrap: wrap;
+    padding-top: 10rem;
+}
+.opt-btn{
+    border: none;
+    background-color: black;
+    color: white;
+    font-size: 4rem;
+    width: 16rem;
+    height: 6rem;
+    border-radius: 1rem;
+}
+
+.forms{
+    padding-top: 100px;
+    display: flex;
+    margin-left: auto;
+    margin-right: auto;
+    width: 500px !important;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.stream-btns{
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+.stream-btn{
+    color: white;
+    background-color: black;
+    width: 4rem;
+    height: 2rem;
+    margin-right: 0.5rem;
+    border:none;
+}
+
+.stream-btn:disabled{
+    background-color: grey;
+}
