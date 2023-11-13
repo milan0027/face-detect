@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, render_template,  redirect
-from code2 import use_keras_after_zoom, demo
+from code2 import use_keras_after_zoom
 from flask_socketio import SocketIO, emit, join_room, leave_room
+import json
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -77,7 +78,7 @@ def on_leave(data):
     room = data['room']
     leave_room(room)
 
-@socketio.on('frameinput0')
+@socketio.on('frameinput')
 def on_frameinput0(data):
     socketio.start_background_task(emit_function, data)
 
@@ -87,9 +88,21 @@ def emit_function(data):
     base64_data = data['image_data_url']
     room = data['room']
     result = base64_data
-    #result = use_keras_after_zoom(base64_data)
-    #print(count)
-    socketio.emit('frameoutput0',result,to=room)
+    multiple_face = 0
+    live_confidence = -1
+    cover_ratio = -1
+    try:
+        result, multiple_face, live_confidence, cover_ratio = use_keras_after_zoom(base64_data)
+    except:
+        print('An exception occured')
+
+    print(multiple_face, live_confidence, cover_ratio)
+    
+    data1 = {'result': result, 'multiple_face': multiple_face, 'live_confidence': str(live_confidence), 'cover_ratio': str(cover_ratio)} 
+    try:
+        socketio.emit('frameoutput0', data1, to=room)  
+    except Exception as e:
+        print(e)
 
 if __name__ == '__main__':
     socketio.run(app,debug=True)

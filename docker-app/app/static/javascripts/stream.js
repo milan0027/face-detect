@@ -4,7 +4,7 @@ const stopStream = document.getElementById("stopStream");
 const video = document.querySelector("video");
 const canvas = document.createElement("canvas");
 const mediaDevices = navigator.mediaDevices;
-const FRAME_RATE = 10;
+const FRAME_RATE = 1;
 const FRAME_HEIGHT = 480;
 const FRAME_WIDTH = 640;
 const usertype = 'streamer';
@@ -64,12 +64,12 @@ startStream.addEventListener("click", async () => {
   const intervalId = accurateTimer(() => {
     canvas.getContext("2d").drawImage(video, 0, 0);
     const image_data_url = canvas.toDataURL("image/jpg",0.5);
-    //const base64_data = image_data_url.split(',')[1];
+    const base64_data = image_data_url.split(',')[1];
     // data url of the image
     //console.log(base64_data);
     //console.log(canvas);
-    console.log(count++);
-    socket.emit('frameinput0', {image_data_url, room,count})
+    //console.log(count++);
+    socket.emit('frameinput', {image_data_url:base64_data, room,count})
   }, 1000/FRAME_RATE);
   
   stopStream.addEventListener("click", () => {
