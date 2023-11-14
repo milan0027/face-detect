@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify, render_template,  redirect
 from code2 import use_keras_after_zoom
 from flask_socketio import SocketIO, emit, join_room, leave_room
-import json
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -96,7 +95,7 @@ def emit_function(data):
     except:
         print('An exception occured')
 
-    print(multiple_face, live_confidence, cover_ratio)
+    #print(multiple_face, live_confidence, cover_ratio)
     
     data1 = {'result': result, 'multiple_face': multiple_face, 'live_confidence': str(live_confidence), 'cover_ratio': str(cover_ratio)} 
     try:

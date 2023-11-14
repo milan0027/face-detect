@@ -5,8 +5,14 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Face Detector</title>
-    <link rel="icon" href="{{ url_for('static',filename='logo/favicon.png') }}" />
-    <link href="{{ url_for('static',filename='stylesheets/index.css') }}" rel="stylesheet" />
+    <link
+      rel="icon"
+      href="{{ url_for('static',filename='logo/favicon.png') }}"
+    />
+    <link
+      href="{{ url_for('static',filename='stylesheets/index.css') }}"
+      rel="stylesheet"
+    />
     <link
       rel="stylesheet"
       href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"
@@ -21,7 +27,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-        const room = '{{room}}';
+      const room = "{{room}}";
     </script>
   </head>
   <body>
@@ -56,13 +62,19 @@
     </nav>
 
     <main class="container mt-3">
-        <h2>Camera ID: {{room}}</h2>
-        <div class="stream-btns">
-            <button class="stream-btn" id="startStream" disabled>Start</button>
-            <button class="stream-btn" id="stopStream" disabled>Stop</button>
-           
+      <h2>Camera ID: {{room}}</h2>
+      <div class="stream-btns">
+        <button class="stream-btn" id="startStream" disabled>Start</button>
+        <button class="stream-btn" id="stopStream" disabled>Stop</button>
+      </div>
+      <div class="row">
+        <div class="col">
+          <video id="video" width="640" height="480" autoplay></video>
         </div>
-        <video id="video" width="640" height="480" autoplay></video>
+        <div class="col">
+          <input type="number" id="frame-rate" min="1" />
+        </div>
+      </div>
     </main>
 
     <script
@@ -75,7 +87,11 @@
       integrity="sha384-cn7l7gDp0eyniUwwAZgrzD06kc/tftFf19TOAs2zVinnD/C7E91j9yyk5//jjpt/"
       crossorigin="anonymous"
     ></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+      integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+      crossorigin="anonymous"
+    ></script>
     <script src="{{ url_for('static',filename='javascripts/stream.js') }}"></script>
   </body>
 </html>

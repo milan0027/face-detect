@@ -4,7 +4,7 @@ const stopStream = document.getElementById("stopStream");
 const video = document.querySelector("video");
 const canvas = document.createElement("canvas");
 const mediaDevices = navigator.mediaDevices;
-const FRAME_RATE = 1;
+const frameinput = document.getElementById('frame-rate');
 const FRAME_HEIGHT = 480;
 const FRAME_WIDTH = 640;
 const usertype = 'streamer';
@@ -51,6 +51,7 @@ const accurateTimer = (fn, time = 1000) => {
 
 
 startStream.addEventListener("click", async () => {
+  const FRAME_RATE = Math.max(1, (frameinput.value?frameinput.value:1))
   cnt = 1;
   let stream = await mediaDevices.getUserMedia({ video: true, audio: false });
   video.srcObject = stream;
