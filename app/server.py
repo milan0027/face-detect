@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, render_template,  redirect
-from code2 import use_keras_after_zoom
-from flask_socketio import SocketIO, emit, join_room, leave_room
+from code2 import combined
+from flask_socketio import SocketIO, join_room, leave_room
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -91,9 +91,9 @@ def emit_function(data):
     live_confidence = -1
     cover_ratio = -1
     try:
-        result, multiple_face, live_confidence, cover_ratio = use_keras_after_zoom(base64_data)
-    except:
-        print('An exception occured')
+        result, multiple_face, live_confidence, cover_ratio = combined(base64_data)
+    except Exception as e:
+        print(e)
 
     #print(multiple_face, live_confidence, cover_ratio)
     
@@ -104,4 +104,4 @@ def emit_function(data):
         print(e)
 
 if __name__ == '__main__':
-    socketio.run(app,debug=True)
+    socketio.run(app,debug=False)

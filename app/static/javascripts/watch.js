@@ -20,6 +20,8 @@ const usertype = 'watcher';
 const stream = [];
 const FRAME_RATE = 25;
 let count = 0;
+let frameAND = 1;
+let frameOR = 0;
 
 const average = (arr) => {
     let value = 0;
@@ -36,7 +38,9 @@ const average = (arr) => {
 }
 let timeoutId = setTimeout(() => {
     image.src = '/static/logo/streamError.jpg';
- },5000);
+    frameAND = 1;
+    frameOR = 0;
+ },4000);
 let streamId = -1;
 
 socket.emit('join', {usertype, room}, ()=>{
@@ -44,8 +48,20 @@ socket.emit('join', {usertype, room}, ()=>{
 })
 
 socket.on('frameoutput0', (data) => {
+    clearTimeout(timeoutId);
+    if(data.multiple_face == 2){
+        multifaceArray.push(0);
+        frameAND = 0;
+    }
+    else if(data.multiple_face == 3){
+        multifaceArray.push(0);
+        frameOR = 1;
+    }
     
-    multifaceArray.push(data.multiple_face);
+    if(frameAND == 0 && frameOR == 1){
+        data.live_confidence = 1;
+    }
+
     liveArray.push(data.live_confidence);
     coverArray.push(data.cover_ratio);
     //uncoverArray.push(data.cover_ratio == '-1' ? -1: (1 - data.cover_ratio));
@@ -53,8 +69,10 @@ socket.on('frameoutput0', (data) => {
     image.src = `data:image/jpg;base64,${data.result}`;
     if(data.multiple_face == "-1"){
         multiface.textContent = 'Not Defined'
+    }else if(data.multiple_face == 1){
+        multiface.textContent = `Yes`
     }else{
-        multiface.textContent = `${data.multiple_face*100}%`
+        multiface.textContent = 'No'
     }
     
     if(data.live_confidence == "-1")
@@ -66,9 +84,15 @@ socket.on('frameoutput0', (data) => {
         cover.textContent = 'Not Defined'
         uncover.textContent = 'Not Defined'
     }else{
-        cover.textContent = data.cover_ratio
+        cover.textContent =  `${(data.cover_ratio)*100}%`
         uncover.textContent = `${(1 - data.cover_ratio)*100}%`
     }
+
+    timeoutId = setTimeout(() => {
+        image.src = '/static/logo/streamError.jpg';
+        frameAND = 1;
+        frameOR = 0;
+     },4000);
 })
 
 setInterval(() => {
