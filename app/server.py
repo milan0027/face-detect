@@ -1,9 +1,10 @@
 from flask import Flask, request, jsonify, render_template,  redirect
 from code2 import combined
 from flask_socketio import SocketIO, join_room, leave_room
+import redis
 
 app = Flask(__name__)
-socketio = SocketIO(app)
+socketio = SocketIO(app, message_queue='redis://')
 @app.route('/')
 def homepage():
     return render_template('homepage.html')
