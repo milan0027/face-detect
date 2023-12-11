@@ -1,5 +1,4 @@
 from flask import Flask, request, jsonify, render_template,  redirect
-from code2 import combined
 from flask_socketio import SocketIO, join_room, leave_room
 
 app = Flask(__name__)
@@ -90,11 +89,6 @@ def emit_function(data):
     multiple_face = 0
     live_confidence = -1
     cover_ratio = -1
-    try:
-        result, multiple_face, live_confidence, cover_ratio = combined(base64_data)
-    except Exception as e:
-        print(e)
-
     #print(multiple_face, live_confidence, cover_ratio)
     
     data1 = {'result': result, 'multiple_face': multiple_face, 'live_confidence': str(live_confidence), 'cover_ratio': str(cover_ratio)} 
