@@ -9,10 +9,10 @@ const livelinessAvg = document.querySelector('#live-avg');
 const multifaceAvg = document.querySelector('#multiface-avg');
 const coverAvg = document.querySelector('#cover-avg');
 const uncoverAvg = document.querySelector('#uncover-avg');
-
-const liveArray = []
-const coverArray = []
-const multifaceArray = []
+const ND = 'Not Defined';
+let liveArray = []
+let coverArray = []
+let multifaceArray = []
 
 const FRAME_HEIGHT = 480;
 const FRAME_WIDTH = 640;
@@ -32,7 +32,7 @@ const average = (arr) => {
         length++;
     });
     if(length == 0)
-    return 'Not Defined';
+    return ND;
 
     return value*100/length;
 }
@@ -40,6 +40,13 @@ let timeoutId = setTimeout(() => {
     image.src = '/static/logo/streamError.jpg';
     frameAND = 1;
     frameOR = 0;
+    liveArray = [];
+    coverArray = [];
+    multifaceArray = [];
+    liveliness.textContent = ND
+    multiface.textContent = ND
+    cover.textContent = ND
+    uncover.textContent = ND
  },4000);
 let streamId = -1;
 
@@ -59,6 +66,7 @@ socket.on('frameoutput0', (data) => {
     }
     
     if(frameAND == 0 && frameOR == 1){
+        liveArray = [];
         data.live_confidence = 1;
     }
 
@@ -76,13 +84,13 @@ socket.on('frameoutput0', (data) => {
     }
     
     if(data.live_confidence == "-1")
-    liveliness.textContent = 'Not Defined'
+    liveliness.textContent = ND
     else
     liveliness.textContent = `${data.live_confidence*100}%`
 
     if(data.cover_ratio == "-1"){
-        cover.textContent = 'Not Defined'
-        uncover.textContent = 'Not Defined'
+        cover.textContent = ND
+        uncover.textContent = ND
     }else{
         cover.textContent =  `${(data.cover_ratio)*100}%`
         uncover.textContent = `${(1 - data.cover_ratio)*100}%`
@@ -92,6 +100,13 @@ socket.on('frameoutput0', (data) => {
         image.src = '/static/logo/streamError.jpg';
         frameAND = 1;
         frameOR = 0;
+        liveArray = [];
+        coverArray = [];
+        multifaceArray = [];
+        liveliness.textContent = ND
+        multiface.textContent = ND
+        cover.textContent = ND
+        uncover.textContent = ND
      },4000);
 })
 
@@ -100,5 +115,5 @@ setInterval(() => {
    multifaceAvg.textContent = `${average(multifaceArray)}%`
    const value = average(coverArray)
    coverAvg.textContent = `${value}%`
-   uncoverAvg.textContent = (value == 'Not Defined' ? value: `${100 - value}%`)
+   uncoverAvg.textContent = (value == ND ? value: `${100 - value}%`)
 },1000)

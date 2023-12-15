@@ -79,7 +79,7 @@ def on_leave(data):
 
 @socketio.on('frameinput')
 def on_frameinput0(data):
-    socketio.start_background_task(emit_function, data)
+    emit_function(data)
 
 
 

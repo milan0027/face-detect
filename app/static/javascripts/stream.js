@@ -66,10 +66,6 @@ startStream.addEventListener("click", async () => {
     canvas.getContext("2d").drawImage(video, 0, 0);
     const image_data_url = canvas.toDataURL("image/jpg",0.5);
     const base64_data = image_data_url.split(',')[1];
-    // data url of the image
-    //console.log(base64_data);
-    //console.log(canvas);
-    //console.log(count++);
     socket.emit('frameinput', {image_data_url:base64_data, room,count})
   }, 1000/FRAME_RATE);
   

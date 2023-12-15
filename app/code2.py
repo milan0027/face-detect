@@ -1,6 +1,4 @@
 #Imports
-
-from ultralytics import YOLO
 import cvzone
 import numpy as np
 import tensorflow as tf
