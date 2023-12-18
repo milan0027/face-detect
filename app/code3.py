@@ -1,3 +1,5 @@
+"""File contains Models and Functions for liveliness, blink and cover ratio detection using approach 2.
+This approach gives better results on average than approach 1 and handles various complex scenarios"""
 #Imports
 import cvzone
 import numpy as np
@@ -14,7 +16,7 @@ from mediapipe.tasks.python import vision
 base_options = python.BaseOptions(model_asset_path='blaze_face_short_range.tflite')
 options = vision.FaceDetectorOptions(base_options=base_options)
 detector_ = vision.FaceDetector.create_from_options(options)
-model = tf.keras.models.load_model('gyanam2.h5',compile=False)
+model = tf.keras.models.load_model('liveliness_model.h5',compile=False)
 classNames = ["Live","Spoof"]
 detector = FaceDetector()
 

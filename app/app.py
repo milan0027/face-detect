@@ -1,7 +1,8 @@
+"""Flask app for hosting. This should be used for production purposes"""
 from flask import Flask, request, jsonify, render_template,  redirect
 from flask_socketio import SocketIO, join_room, leave_room
 from flask_celery import make_celery
-from code2 import combined
+from code3 import combined
 import eventlet
 eventlet.monkey_patch()  
 
@@ -64,8 +65,6 @@ def predict():
         result, multiple_face, live_confidence, cover_ratio = combined(base64_data)
     except Exception as e:
         print(e)
-
-    #print(multiple_face, live_confidence, cover_ratio)
     
     data1 = {'result': result, 'multiple_face': multiple_face, 'live_confidence': str(live_confidence), 'cover_ratio': str(cover_ratio)}
     return jsonify(data1)
@@ -106,7 +105,7 @@ def emit_function(data):
         result, multiple_face, live_confidence, cover_ratio = combined(base64_data)
     except Exception as e:
         print(e)
-    #print(multiple_face, live_confidence, cover_ratio)
+   
     data1 = {'result': result, 'multiple_face': multiple_face, 'live_confidence': str(live_confidence), 'cover_ratio': str(cover_ratio)}
     try:
         local_socketio.emit('frameoutput0', data1, to=room)

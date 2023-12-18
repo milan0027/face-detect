@@ -1,3 +1,5 @@
+/**JS file for streaming interface. 
+Captures image from video element and emits on socket connection according to frame rate*/
 const socket = io({ transports: ['websocket'] });
 const startStream = document.getElementById("startStream");
 const stopStream = document.getElementById("stopStream");

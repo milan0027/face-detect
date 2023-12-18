@@ -1,3 +1,4 @@
+/**JS file for watching interface */
 const socket = io({ transports: ['websocket'] });
 const image = document.querySelector("img");
 const liveliness = document.querySelector('#live');
@@ -72,8 +73,6 @@ socket.on('frameoutput0', (data) => {
 
     liveArray.push(data.live_confidence);
     coverArray.push(data.cover_ratio);
-    //uncoverArray.push(data.cover_ratio == '-1' ? -1: (1 - data.cover_ratio));
-    //stream.push(`data:image/jpg;base64,${frame}`)
     image.src = `data:image/jpg;base64,${data.result}`;
     if(data.multiple_face == "-1"){
         multiface.textContent = 'Not Defined'
