@@ -52,30 +52,23 @@ def watch_room(room):
 def stream_room(room):
     return render_template('stream.html', room=room)
 
-
-
-@app.route('/predict1', methods=['POST'])
-def predict1():
+@app.route('/predict', methods=['POST'])
+def predict():
     data = request.get_json(force = True)
-    # print(data['image'][0:10])
-    #result = use_yolo_model(data['image'])
-    #print(result[0:10])
-    return jsonify(result=result)
+    base64_data = data['image_data_url']
+    result = base64_data
+    multiple_face = 0
+    live_confidence = -1
+    cover_ratio = -1
+    try:
+        result, multiple_face, live_confidence, cover_ratio = combined(base64_data)
+    except Exception as e:
+        print(e)
 
-@app.route('/predict2', methods=['POST'])
-def predict2():
-    data = request.get_json(force = True)
-    # print(data['image'][0:10])
-    #result = use_keras_after_zoom(data['image'])
-    #print(result[0:10])
-    return jsonify(result=result)
-
-@app.route('/transmit', methods=['PUT'])
-def transmit():
-    #print('gotit')
-    data = request.get_json(force = True)
-    socketio.start_background_task(emit_function, data)
-    return 1
+    #print(multiple_face, live_confidence, cover_ratio)
+    
+    data1 = {'result': result, 'multiple_face': multiple_face, 'live_confidence': str(live_confidence), 'cover_ratio': str(cover_ratio)}
+    return jsonify(data1)
 
 @socketio.on('connect')
 def test_connect():

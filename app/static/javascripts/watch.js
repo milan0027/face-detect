@@ -34,7 +34,7 @@ const average = (arr) => {
     if(length == 0)
     return ND;
 
-    return value*100/length;
+    return Math.round(value*100/length*100)/100;
 }
 let timeoutId = setTimeout(() => {
     image.src = '/static/logo/streamError.jpg';

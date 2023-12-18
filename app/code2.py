@@ -506,148 +506,148 @@ def combined(encoded_string):
     offsetMask = 5
     mask_offset = 100
     img = convert_from_base64(encoded_string)
-    
+    if img is not None:
     #Detect faces in the image
-    img2, bboxs = detector.findFaces(img,draw=False)
-    # (image, multiple, helmet confidence, mask confidence, live confidence, cover ratio)
+        img2, bboxs = detector.findFaces(img,draw=False)
+        # (image, multiple, helmet confidence, mask confidence, live confidence, cover ratio)
 
-    # If more than 1 face, return the image itself
-    if(len(bboxs) > 1):
-       #print('here')
-       return (encoded_string, 1, -1, -1)
-    
-    # Only proceed when there is only 1 face
-    if(len(bboxs) == 1):
-        bbox = bboxs[0]
-        x,y,w,h = bbox["bbox"]
+        # If more than 1 face, return the image itself
+        if(len(bboxs) > 1):
+        #print('here')
+            return (encoded_string, 1, -1, -1)
         
-        # Set the offset for the face's bounding box
-        offsetW = (offsetPercentageW/100)*w
-        xp = int(x - offsetW)
-        wp = int(w + 2*offsetW)
-        xc = int(x - 2*offsetW)
-        xw = int(w + 4*offsetW)
-        offsetH = (offsetPercentageH/100)*h
-        yp = int(y - offsetH * 6)
-        hp = int(h + offsetH * 6)
-        yc = int(y - offsetH * 7)
-        yh = int(h + offsetH * 11)
-        
-        # Ensure that x, y, w, and h stay within image dimensions
-        xp = max(0, xp)
-        yp = max(0, yp)
-        wp = min(img.shape[1] - xp, wp)
-        hp = min(img.shape[0] - yp, hp)
-        
-        xc = max(0, xc)
-        yc = max(0, yc)
-        xw = min(img.shape[1] - xc, xw)
-        yh = min(img.shape[0] - yc, yh)
-        cropped_face = img[yc:yc+yh, xc:xc+xw]
-        
-          
-        # Resize the raw image into (224-height,224-width) pixels
-        image = cv2.resize(cropped_face, (224, 224), interpolation=cv2.INTER_AREA)
-        # Make the image a numpy array and reshape it to the models input shape.
-        image = np.asarray(image, dtype=np.float32).reshape(1, 224, 224, 3)
-        # Normalize the image array
-        image = (image / 127.5) - 1
-
-        #Get the probabilites of the mask scenario
-        prob_arr = face_mask(image)
-
-        #Get the facial landmarks
-        face_lndmk = face_landmarks(img)
-        if(len(face_lndmk) == 0):
-            cvzone.cornerRect(img, (xp, yp, wp, hp),colorC=(255, 0, 0),colorR=(255, 0, 0))
-        
-            return (convert_to_base64(img), 0, 0, 0)
-           
-
-        #Calculations for the upper limit of mask's bounding box
-        left_eye_x, left_eye_y = face_lndmk[0]
-        right_eye_x, right_eye_y = face_lndmk[1]
-        nose_x, nose_y = face_lndmk[2]
-        lips_x, lips_y = face_lndmk[3]
-
-        with_mask_y = (left_eye_y+right_eye_y+(2*nose_y))/4
-       
-        incorrect_mask_y = lips_y
-       
-        mask_bbox_x2 = xp+wp
-        without_mask_y = yp+hp
-        
-        mask_bbox_y1 = int(with_mask_y*prob_arr[1] + without_mask_y*prob_arr[0] + incorrect_mask_y*prob_arr[2])
-        mask_bbox_y1 = int((1 + offsetMask/100)*mask_bbox_y1)
-        
-        mask_bbox_y2 = int(without_mask_y)
-       
-        mask_bbox_x1 = xp
-        mask_bbox_w = wp
-        mask_bbox_h = max(0, mask_bbox_y2-mask_bbox_y1)
-        cover_ratio = mask_bbox_h / hp
-        # cvzone.cornerRect(img, (mask_bbox_x1, mask_bbox_y1, mask_bbox_w, mask_bbox_h),colorC=(0, 255, 0),colorR=(0, 255, 0))
-        # cvzone.cornerRect(img, (x, y, w, h),colorC=(255, 0, 0),colorR=(255, 0, 0))
-        
-        # #cv2.imwrite('hello.jpg', img)
-        # #Return the encoded image back to the frontend
-    
-        offsetPercentageW = 10
-        offsetPercentageH = 15
-        
-        offsetW = (offsetPercentageW/100)*w
-        x = int(x - offsetW)
-        w = int(w + offsetW * 2)
-        
-        offsetH = (offsetPercentageH/100)*h
-        y = int(y - offsetH * 3)
-        h = int(h + offsetH * 4)
-        
-        # Ensure that x, y, w, and h stay within image dimensions
-        x = max(0, x)
-        y = max(0, y)
-        w = min(img.shape[1] - x, w)
-        h = min(img.shape[0] - y, h)
-        
-        # cv2.rectangle(img, (x,y,w,h), (255,0,0), 3)
-        
-        cropped_face = img[y:y+h, x:x+w]
-        blink = detect_eyes(img)
+        # Only proceed when there is only 1 face
+        if(len(bboxs) == 1):
+            bbox = bboxs[0]
+            x,y,w,h = bbox["bbox"]
             
-        # Resize the raw image into (224-height,224-width) pixels
-        image = cv2.resize(cropped_face, (224, 224), interpolation=cv2.INTER_AREA)
-        # Make the image a numpy array and reshape it to the models input shape.
-        image = np.asarray(image, dtype=np.float32).reshape(1, 224, 224, 3)
-        # Normalize the image array
-        image = (image / 127.5) - 1
-        
-        # Predicts the model
-        prediction = model.predict(image)
-        cls = np.argmax(prediction)
-        class_name = classNames[cls]
-        confidence_score = prediction[0][cls]
-        
-        
-        live_percentage = confidence_score
-        if classNames[cls]=='Spoof':
-            live_percentage = 1-confidence_score
-        
-        color = (0, 255, 0)
-          
-        # print(box.cls)
-        #if confidence_score > 0.6:
+            # Set the offset for the face's bounding box
+            offsetW = (offsetPercentageW/100)*w
+            xp = int(x - offsetW)
+            wp = int(w + 2*offsetW)
+            xc = int(x - 2*offsetW)
+            xw = int(w + 4*offsetW)
+            offsetH = (offsetPercentageH/100)*h
+            yp = int(y - offsetH * 6)
+            hp = int(h + offsetH * 6)
+            yc = int(y - offsetH * 7)
+            yh = int(h + offsetH * 11)
+            
+            # Ensure that x, y, w, and h stay within image dimensions
+            xp = max(0, xp)
+            yp = max(0, yp)
+            wp = min(img.shape[1] - xp, wp)
+            hp = min(img.shape[0] - yp, hp)
+            
+            xc = max(0, xc)
+            yc = max(0, yc)
+            xw = min(img.shape[1] - xc, xw)
+            yh = min(img.shape[0] - yc, yh)
+            cropped_face = img[yc:yc+yh, xc:xc+xw]
+            
+            
+            # Resize the raw image into (224-height,224-width) pixels
+            image = cv2.resize(cropped_face, (224, 224), interpolation=cv2.INTER_AREA)
+            # Make the image a numpy array and reshape it to the models input shape.
+            image = np.asarray(image, dtype=np.float32).reshape(1, 224, 224, 3)
+            # Normalize the image array
+            image = (image / 127.5) - 1
 
-         # if classNames[cls] == 'Live':
-          #    color = (0, 255, 0)
-          #    #print(f"Live Confidence = {confidence_score}, Class = {cls}")
-          #else:
-          #    color = (0, 0, 255)
-              #print(f"Spoof Confidence = {confidence_score}, Class = {cls}")
+            #Get the probabilites of the mask scenario
+            prob_arr = face_mask(image)
 
-        cvzone.cornerRect(img, (xp, yp, wp, hp),colorC=color,colorR=color)
-        #cvzone.putTextRect(img, f'{classNames[cls].upper()} {int(confidence_score*100)}%',(max(0, x), max(35, y)), scale=2, thickness=4,colorR=color,colorB=color)
+            #Get the facial landmarks
+            face_lndmk = face_landmarks(img)
+            if(len(face_lndmk) == 0):
+                cvzone.cornerRect(img, (xp, yp, wp, hp),colorC=(255, 0, 0),colorR=(255, 0, 0))
+            
+                return (convert_to_base64(img), 0, 0, 0)
+            
 
-        return (convert_to_base64(img), blink, live_percentage, cover_ratio)
+            #Calculations for the upper limit of mask's bounding box
+            left_eye_x, left_eye_y = face_lndmk[0]
+            right_eye_x, right_eye_y = face_lndmk[1]
+            nose_x, nose_y = face_lndmk[2]
+            lips_x, lips_y = face_lndmk[3]
+
+            with_mask_y = (left_eye_y+right_eye_y+(2*nose_y))/4
+        
+            incorrect_mask_y = lips_y
+        
+            mask_bbox_x2 = xp+wp
+            without_mask_y = yp+hp
+            
+            mask_bbox_y1 = int(with_mask_y*prob_arr[1] + without_mask_y*prob_arr[0] + incorrect_mask_y*prob_arr[2])
+            mask_bbox_y1 = int((1 + offsetMask/100)*mask_bbox_y1)
+            
+            mask_bbox_y2 = int(without_mask_y)
+        
+            mask_bbox_x1 = xp
+            mask_bbox_w = wp
+            mask_bbox_h = max(0, mask_bbox_y2-mask_bbox_y1)
+            cover_ratio = mask_bbox_h / hp
+            # cvzone.cornerRect(img, (mask_bbox_x1, mask_bbox_y1, mask_bbox_w, mask_bbox_h),colorC=(0, 255, 0),colorR=(0, 255, 0))
+            # cvzone.cornerRect(img, (x, y, w, h),colorC=(255, 0, 0),colorR=(255, 0, 0))
+            
+            # #cv2.imwrite('hello.jpg', img)
+            # #Return the encoded image back to the frontend
+        
+            offsetPercentageW = 10
+            offsetPercentageH = 15
+            
+            offsetW = (offsetPercentageW/100)*w
+            x = int(x - offsetW)
+            w = int(w + offsetW * 2)
+            
+            offsetH = (offsetPercentageH/100)*h
+            y = int(y - offsetH * 3)
+            h = int(h + offsetH * 4)
+            
+            # Ensure that x, y, w, and h stay within image dimensions
+            x = max(0, x)
+            y = max(0, y)
+            w = min(img.shape[1] - x, w)
+            h = min(img.shape[0] - y, h)
+            
+            # cv2.rectangle(img, (x,y,w,h), (255,0,0), 3)
+            
+            cropped_face = img[y:y+h, x:x+w]
+            blink = detect_eyes(img)
+                
+            # Resize the raw image into (224-height,224-width) pixels
+            image = cv2.resize(cropped_face, (224, 224), interpolation=cv2.INTER_AREA)
+            # Make the image a numpy array and reshape it to the models input shape.
+            image = np.asarray(image, dtype=np.float32).reshape(1, 224, 224, 3)
+            # Normalize the image array
+            image = (image / 127.5) - 1
+            
+            # Predicts the model
+            prediction = model.predict(image)
+            cls = np.argmax(prediction)
+            class_name = classNames[cls]
+            confidence_score = prediction[0][cls]
+            
+            
+            live_percentage = confidence_score
+            if classNames[cls]=='Spoof':
+                live_percentage = 1-confidence_score
+            
+            color = (0, 255, 0)
+            
+            # print(box.cls)
+            #if confidence_score > 0.6:
+
+            # if classNames[cls] == 'Live':
+            #    color = (0, 255, 0)
+            #    #print(f"Live Confidence = {confidence_score}, Class = {cls}")
+            #else:
+            #    color = (0, 0, 255)
+                #print(f"Spoof Confidence = {confidence_score}, Class = {cls}")
+
+            cvzone.cornerRect(img, (xp, yp, wp, hp),colorC=color,colorR=color)
+            #cvzone.putTextRect(img, f'{classNames[cls].upper()} {int(confidence_score*100)}%',(max(0, x), max(35, y)), scale=2, thickness=4,colorR=color,colorB=color)
+
+            return (convert_to_base64(img), blink, live_percentage, cover_ratio)
 
     
     return (encoded_string, 0, -1, -1)

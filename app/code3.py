@@ -104,84 +104,87 @@ def combined(encoded_string):
     offsetPercentageH = 2.5
     img = convert_from_base64(encoded_string)
     
+    if img is not None:
     #Detect faces in the image
-    img2, bboxs = detector.findFaces(img, draw=False)
-    # (image, multiple, helmet confidence, mask confidence, live confidence, cover ratio)
+        img2, bboxs = detector.findFaces(img, draw=False)
+        # (image, multiple, helmet confidence, mask confidence, live confidence, cover ratio)
 
-    # If more than 1 face, return the image itself
-    if(len(bboxs) > 1):
-       #print('here')
-       return (encoded_string, 1, -1, -1)
-    
-    # Only proceed when there is only 1 face
-    if(len(bboxs) == 1):
-        bbox = bboxs[0]
-        x,y,w,h = bbox["bbox"]
+        # If more than 1 face, return the image itself
+        if(len(bboxs) > 1):
+        #print('here')
+            return (encoded_string, 1, -1, -1)
         
-        # Set the offset for the face's bounding box
-        offsetW = (offsetPercentageW/100)*w
-        xp = int(x - offsetW)
-        wp = int(w + 2*offsetW)
-        offsetH = (offsetPercentageH/100)*h
-        yp = int(y - offsetH * 6)
-        hp = int(h + offsetH * 6)
-        
-        # Ensure that x, y, w, and h stay within image dimensions
-        xp = max(0, xp)
-        yp = max(0, yp)
-        wp = min(img.shape[1] - xp, wp)
-        hp = min(img.shape[0] - yp, hp)
-        
-        
-        offsetPercentageW = 10
-        offsetPercentageH = 15
-        
-        offsetW = (offsetPercentageW/100)*w
-        x = int(x - offsetW)
-        w = int(w + offsetW * 2)
-        
-        offsetH = (offsetPercentageH/100)*h
-        y = int(y - offsetH * 3)
-        h = int(h + offsetH * 4)
-        
-        # Ensure that x, y, w, and h stay within image dimensions
-        x = max(0, x)
-        y = max(0, y)
-        w = min(img.shape[1] - x, w)
-        h = min(img.shape[0] - y, h)
-        
-        # cv2.rectangle(img, (x,y,w,h), (255,0,0), 3)
-        
-        cropped_face = img[y:y+h, x:x+w]
-        vision_img = np.array(cropped_face)
-        type(vision_img)
-        rgb_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=vision_img)
-        detection_result = detector_.detect(rgb_image)
-        cover_ratio = visualize(detection_result)
-        blink = detect_eyes(img)
+        # Only proceed when there is only 1 face
+        if(len(bboxs) == 1):
+            bbox = bboxs[0]
+            x,y,w,h = bbox["bbox"]
             
-        # Resize the raw image into (224-height,224-width) pixels
-        image = cv2.resize(cropped_face, (224, 224), interpolation=cv2.INTER_AREA)
-        # Make the image a numpy array and reshape it to the models input shape.
-        image = np.asarray(image, dtype=np.float32).reshape(1, 224, 224, 3)
-        # Normalize the image array
-        image = (image / 127.5) - 1
-        
-        # Predicts the model
-        prediction = model.predict(image)
-        cls = np.argmax(prediction)
-        confidence_score = prediction[0][cls]
-        
-        
-        live_percentage = confidence_score
-        if classNames[cls]=='Spoof':
-            live_percentage = 1-confidence_score
-        
-        color = (0, 255, 0)
-          
-        cvzone.cornerRect(img, (xp, yp, wp, hp),colorC=color,colorR=color)
+            # Set the offset for the face's bounding box
+            offsetW = (offsetPercentageW/100)*w
+            xp = int(x - offsetW)
+            wp = int(w + 2*offsetW)
+            offsetH = (offsetPercentageH/100)*h
+            yp = int(y - offsetH * 6)
+            hp = int(h + offsetH * 6)
+            
+            # Ensure that x, y, w, and h stay within image dimensions
+            xp = max(0, xp)
+            yp = max(0, yp)
+            wp = min(img.shape[1] - xp, wp)
+            hp = min(img.shape[0] - yp, hp)
+            
+            
+            offsetPercentageW = 10
+            offsetPercentageH = 15
+            
+            offsetW = (offsetPercentageW/100)*w
+            x = int(x - offsetW)
+            w = int(w + offsetW * 2)
+            
+            offsetH = (offsetPercentageH/100)*h
+            y = int(y - offsetH * 3)
+            h = int(h + offsetH * 4)
+            
+            # Ensure that x, y, w, and h stay within image dimensions
+            x = max(0, x)
+            y = max(0, y)
+            w = min(img.shape[1] - x, w)
+            h = min(img.shape[0] - y, h)
+            
+            # cv2.rectangle(img, (x,y,w,h), (255,0,0), 3)
+            
+            cropped_face = img[y:y+h, x:x+w]
+            vision_img = np.array(cropped_face)
+            type(vision_img)
+            rgb_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=vision_img)
+            detection_result = detector_.detect(rgb_image)
+            cover_ratio = visualize(detection_result)
+            blink = detect_eyes(img)
+                
+            # Resize the raw image into (224-height,224-width) pixels
+            image = cv2.resize(cropped_face, (224, 224), interpolation=cv2.INTER_AREA)
+            # Make the image a numpy array and reshape it to the models input shape.
+            image = np.asarray(image, dtype=np.float32).reshape(1, 224, 224, 3)
+            # Normalize the image array
+            image = (image / 127.5) - 1
+            
+            # Predicts the model
+            prediction = model.predict(image)
+            cls = np.argmax(prediction)
+            confidence_score = prediction[0][cls]
+            
+            
+            live_percentage = confidence_score
+            if classNames[cls]=='Spoof':
+                live_percentage = 1-confidence_score
+            
+            color = (0, 255, 0)
+            
+            cvzone.cornerRect(img, (xp, yp, wp, hp),colorC=color,colorR=color)
 
-        return (convert_to_base64(img), blink, live_percentage, cover_ratio)
+            live_percentage = round(live_percentage, 4)
+            cover_ratio = round(cover_ratio, 4)
+            return (convert_to_base64(img), blink, live_percentage, cover_ratio)
 
     
     return (encoded_string, 0, -1, -1)
