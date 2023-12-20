@@ -2,6 +2,7 @@
 from flask import Flask, request, jsonify, render_template,  redirect
 from flask_socketio import SocketIO, join_room, leave_room
 from flask_celery import make_celery
+from flask_swagger_ui import get_swaggerui_blueprint
 from code3 import combined
 import eventlet
 eventlet.monkey_patch()  
@@ -21,6 +22,18 @@ CELERY_RESULT_BACKEND='redis://localhost:6379/0'
 # integrates Flask-SocketIO with the Flask application
 socketio = SocketIO(app, message_queue='redis://localhost:6379/0')
 
+SWAGGER_URL="/swagger"
+API_URL="/static/swagger.json"
+
+swagger_ui_blueprint = get_swaggerui_blueprint(
+    SWAGGER_URL,
+    API_URL,
+    config={
+        'app_name': 'Access API'
+    }
+)
+
+app.register_blueprint(swagger_ui_blueprint, url_prefix=SWAGGER_URL)
 # the app is passed to meke_celery function, this function sets up celery in order to integrate with the flask application
 celery = make_celery(app)
 
