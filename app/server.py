@@ -89,6 +89,9 @@ def on_leave(data):
 def on_frameinput0(data):
     emit_function(data)
 
+@socketio.on('frameinput1')
+def on_frameinput1(data):
+    emit_function1(data)
 
 
 def emit_function(data):
@@ -106,6 +109,25 @@ def emit_function(data):
     data1 = {'result': result, 'multiple_face': str(multiple_face), 'live_confidence': str(live_confidence), 'cover_ratio': str(cover_ratio)} 
     try:
         socketio.emit('frameoutput0', data1, to=room)  
+    except Exception as e:
+        print(e)
+
+
+def emit_function1(data):
+    base64_data = data['image_data_url']
+    room = data['room']
+    result = base64_data
+    multiple_face = 0
+    live_confidence = -1
+    cover_ratio = -1
+    try:
+        result, multiple_face, live_confidence, cover_ratio = combined(base64_data)
+    except Exception as e:
+        print(e)
+    
+    data1 = {'multiple_face': str(multiple_face), 'live_confidence': str(live_confidence), 'cover_ratio': str(cover_ratio)} 
+    try:
+        socketio.emit('frameoutput1', data1, to=room)  
     except Exception as e:
         print(e)
 
