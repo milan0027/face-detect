@@ -5,8 +5,14 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Face Detector</title>
-    <link rel="icon" href="{{ url_for('static',filename='logo/favicon.png') }}" />
-    <link href="{{ url_for('static',filename='stylesheets/index.css') }}" rel="stylesheet" />
+    <link
+      rel="icon"
+      href="{{ url_for('static',filename='logo/favicon.png') }}"
+    />
+    <link
+      href="{{ url_for('static',filename='stylesheets/index.css') }}"
+      rel="stylesheet"
+    />
     <link
       rel="stylesheet"
       href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"
@@ -41,10 +47,7 @@
           <div class="ms-auto">
             <ul class="navbar-nav">
               <li class="nav-item">
-                <a class="nav-link" href="/stream">Stream</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="/watch">Watch</a>
+                <a class="nav-link" href="/client">Client</a>
               </li>
             </ul>
           </div>
@@ -53,25 +56,40 @@
     </nav>
 
     <main class="container mt-3">
+      
       <div class="row">
-        
-          <div class="forms">
-            <h2>Stream</h2>
-                <form action="/stream" method="POST" novalidate class="validated-form">
-                    <div class="input-group mb-3">
-                      <span class="input-group-text">Camera ID</span>
-                        <input class="form-control" type="text" id="stream" placeholder="e.g. Camera 1" name="room" required>
-                    </div>
-                    <div class="mb-3">
-                        <button class="btn btn-dark submit-button" style="width: 100%;">Submit</button>
-                    </div>
-                </form>
-            
-         
+        <div class="col">
+          <video id="video" width="640" height="480" autoplay></video>
+        </div>
+        <div class="col">
+            <div class="stream-btns">
+                <div class="input-group mb-3">
+                    <span class="input-group-text">FPS</span>
+                      <input class="form-control" type="number" id="frame-rate" placeholder="Frame Rate" min="1" required>
+                </div>
+                <div class="input-group mb-3">
+                    <span class="input-group-text">Time</span>
+                      <input class="form-control" type="number" id="time-input" placeholder="Duration in sec" min="1" required>
+                </div>
+                
+                <button class="stream-btn" id="startStream" disabled>Start</button>
+                <div id="time-info">
+                    <span id="time-text"></span><span id="time-value"></span>
+                </div>
+                <div id="result-info">
+                    <b>Live: </b><span id="live-avg">Not Defined</span>
+                    <hr />
+                    <b>Mutiple Faces: </b><span id="multiface-avg">Not Defined</span>
+                    <hr />
+                    <b>Cover: </b><span id="cover-avg">Not Defined</span>
+                    <hr />
+                    <b>Uncover: </b><span id="uncover-avg">Not Defined</span>
+                </div>
+            </div>
         </div>
       </div>
     </main>
-    <script src='/javascripts/validateinput.js' ></script>
+
     <script
       src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"
       integrity="sha384-eMNCOe7tC1doHpGoWe/6oMVemdAVTMs2xqW4mwXrXsW0L84Iytr2wi5v2QjrP/xp"
@@ -82,5 +100,11 @@
       integrity="sha384-cn7l7gDp0eyniUwwAZgrzD06kc/tftFf19TOAs2zVinnD/C7E91j9yyk5//jjpt/"
       crossorigin="anonymous"
     ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+      integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+      crossorigin="anonymous"
+    ></script>
+    <script src="{{ url_for('static',filename='javascripts/client.js') }}"></script>
   </body>
 </html>
