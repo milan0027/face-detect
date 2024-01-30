@@ -1,6 +1,6 @@
 """Flask app for local server. This should be used for development purposes. Also integrates swagger ui"""
 from flask import Flask, request, jsonify, render_template,  redirect
-from code3 import combined
+from code4 import combined
 from flask_socketio import SocketIO, join_room, leave_room
 from flask_swagger_ui import get_swaggerui_blueprint
 
