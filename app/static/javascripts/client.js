@@ -30,7 +30,7 @@ let live_array = []
 let cover_array = []
 let multiface_array = []
 let blink_array = []
-
+let tid = -1
 let room = '';
 socket.on('connect', () => {
     console.log('connected');
@@ -39,7 +39,6 @@ socket.on('connect', () => {
 
 //handle incoming data from server for each frame
 socket.on('frameoutput1', (data) => {
-    
     let liveliness = data['live_confidence']
     let multiface = data['multiple_face']
     let cover = data['cover_ratio']
@@ -54,11 +53,19 @@ socket.on('frameoutput1', (data) => {
         multiface_array.push(multiface)
     else
         multiface_array.push('0')
+
+    
+    if(tid != -1){
+        clearTimeout(tid)
+        tid = setTimeout(processResults, 2000);
+    }
+            
 })
 
 
 startStream.addEventListener("click", async () => {
   let count = 0;
+  tid = -1;
   live_array = [];
   blink_array = [];
   multiface_array = [];
@@ -81,8 +88,8 @@ startStream.addEventListener("click", async () => {
   startStream.setAttribute("disabled", "disabled");
   
   const intervalId = accurateTimer(() => {
-    timevalue.innerHTML = Math.floor(count/FRAME_RATE);
     count++;
+    timevalue.innerHTML = Math.floor(count/FRAME_RATE);
     canvas.getContext("2d").drawImage(video, 0, 0);
     const image_data_url = canvas.toDataURL("image/jpg");
     const base64_data = image_data_url.split(',')[1];
@@ -90,11 +97,13 @@ startStream.addEventListener("click", async () => {
   }, 1000/FRAME_RATE);
 
   setTimeout(() => {
+        tid = setTimeout(processResults, 2000);
+        timetext.innerHTML='';
+        timevalue.innerHTML='';
         intervalId.cancel();
         stream.getVideoTracks().forEach(track => {track.stop()});
         startStream.removeAttribute("disabled");
-        processResults();
-    }, (DURATION+1) * 1000);
+    }, (DURATION) * 1000);
 });
 
 
@@ -131,19 +140,17 @@ const accurateTimer = (fn, time = 1000) => {
 };
 
 function processResults(){
-    timetext.innerHTML='';
-    timevalue.innerHTML='';
     resultinfo.style.display = 'block'
     if(blink(blink_array) == 1)
         liveavg.innerHTML = '100%';
     else{
         let liveliness = average(live_array)
-        if(liveliness != -1)
+        if(liveliness != -1){
             liveliness = Math.round(liveliness*10000)/100
-            liveavg.innerHTML = liveliness + '%'; 
+            liveavg.innerHTML = liveliness + '%';
+        }
     }
     
-
     let multiface = average(multiface_array)
     let cover = average(cover_array)
 
@@ -161,7 +168,7 @@ function processResults(){
 }
 
 function average(arr){
-    
+    console.log(arr.length)
     let poss = -1
     let avg = 0
     arr.forEach(e => {
