@@ -3,7 +3,7 @@ from flask import Flask, request, jsonify, render_template,  redirect
 from flask_socketio import SocketIO, join_room, leave_room
 from flask_celery import make_celery
 from flask_swagger_ui import get_swaggerui_blueprint
-from code3 import combined
+from code4 import combined, realtime
 import eventlet
 eventlet.monkey_patch()  
 
@@ -41,6 +41,13 @@ celery = make_celery(app)
 def homepage():
     return render_template('homepage.html')
 
+@app.route('/client')
+def clientpage():
+    return render_template('client.html')
+
+@app.route('/realtime')
+def clientpage():
+    return render_template('realtime.html')
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -81,6 +88,10 @@ def on_leave(data):
 def on_frameinput1(data):
     emit_function1.delay(data)
 
+@socketio.on('realtimein')
+def on_realtimein(data):
+    emit_realtime(data)
+
 @celery.task()
 def emit_function1(data):
     local_socketio = SocketIO(message_queue='redis://localhost:6379/0')
@@ -99,6 +110,24 @@ def emit_function1(data):
         local_socketio.emit('frameoutput1', data1, to=room)  
     except Exception as e:
         print(e)
+
+@celery.task()
+def emit_realtime(data):
+    local_socketio = SocketIO(message_queue='redis://localhost:6379/0')
+    base64_data = data['image_data_url']
+    room = data['room']
+    try:
+       base64_data = realtime(base64_data)
+    except Exception as e:
+       print(e)
+
+    data1 = {'image_data_url': base64_data}
+
+    try:
+        local_socketio.emit('realtimeout', data1, to = room)
+    except Exception as e:
+        print(e)
+
 
 if __name__ == '__main__':
     socketio.run(app,debug=False)

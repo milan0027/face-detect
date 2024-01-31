@@ -8,20 +8,21 @@ import base64
 from ultralytics import YOLO
 from cvzone.FaceDetectionModule import FaceDetector
 import cv2
-import mediapipe as mp
-from mediapipe.tasks import python
-from mediapipe.tasks.python import vision
 
+from ultralytics import YOLO
+import time
+import math
+import cvzone
+from cvzone.FaceDetectionModule import FaceDetector
+from cvzone.HandTrackingModule import HandDetector
+import shapely
+from shapely.geometry import Polygon
 # Loading all the models
-
-base_options = python.BaseOptions(model_asset_path='blaze_face_short_range.tflite')
-options = vision.FaceDetectorOptions(base_options=base_options)
-detector_ = vision.FaceDetector.create_from_options(options)
-model = tf.keras.models.load_model('liveliness_model.h5',compile=False)
-classNames = ["Live","Spoof"]
 detector = FaceDetector()
-uncover_model = YOLO('new_masks_added.pt')
-classNames_uncover = [
+# Initialize the HandDetector class with the given parameters
+detector_hand = HandDetector(staticMode=False, maxHands=10, modelComplexity=1, detectionCon=0.5, minTrackCon=0.5)
+model = YOLO('new_masks_added.pt')
+classNames = [
       "Uncovered",
       "Hand_and_Object",
       "Helmet_and_Cap",
@@ -29,94 +30,247 @@ classNames_uncover = [
       "Scarf",
       "Spectacles",
 ]
-eye_cascPath = 'haarcascade_eye_tree_eyeglasses.xml'  #eye detect model
-face_cascPath = 'haarcascade_frontalface_alt.xml'  #face detect model
-faceCascade = cv2.CascadeClassifier(face_cascPath)
-eyeCascade = cv2.CascadeClassifier(eye_cascPath)
 
 
-def visualize(detection_result):
-  
-  
-  for detection in detection_result.detections:
+def cover_result(img):
 
-    category = detection.categories[0]
-    probability = round(category.score, 4)
-   
-    if(probability >= 0.92):
-        return 0
-  
-    if(probability <= 0.55):
-        return 0.85
+    results = model(img, stream=True, verbose=False)
+    hands, img = detector_hand.findHands(img, draw=False, flipType=True)
     
-    ratio = 2.36 * ( 0.92 - probability)
-    return ratio
-
-  return 0.85
-
-
-def coverratio(img):
-
-    results = uncover_model(img, stream=True, verbose=False)
-
+    
     for r in results:
         boxes = r.boxes
         
+        x1, y1, x2, y2 = 0,0,0,0
+
+    
+        box_face = [[x1, y1], [x1, y2], [x2, y2], [x2, y1]]
+        polygon_face = Polygon(box_face)
+        total_face_area = 1
+
+        uncover = 1
+        clsname = "Covered"
+        
         for box in boxes:
-            
-            
+            # Bounding Box
+            x1, y1, x2, y2 = box.xyxy[0]
+            x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+            # cv2.rectangle(img,(x1,y1),(x2,y2),(255,0,255),3)
+            w, h = x2 - x1, y2 - y1
+            # Confidence
+            conf = math.ceil((box.conf[0] * 100)) / 100
+            conf1 = conf
             # Class Name
             cls = int(box.cls[0])
             
-            cover = -1
-            if classNames_uncover[cls] == "Spectacles":
-                cover = 0.2
-            elif classNames_uncover[cls] == "Helmet_and_Cap":
-                cover = 0.15
-            elif classNames_uncover[cls] == "Scarf":
-                cover = 0.1
-            elif classNames_uncover[cls] == "Mask":
-                cover = 0.45
-            elif classNames_uncover[cls] == "Uncovered":
-                cover = 0
+            box_face = [[x1, y1], [x1, y2], [x2, y2], [x2, y1]]
+            polygon_face = Polygon(box_face)
+            total_face_area = polygon_face.area
+              
+            uncover = 1
+            clsname = "Covered"
             
-            print(cover)
-            return cover
+            if classNames[cls] == "Uncovered":
+              clsname = "Uncovered"
+            elif classNames[cls] == "Spectacles":
+              clsname = "Uncovered"
+              uncover = 0.9 
+            elif classNames[cls] == "Helmet_and_Cap":
+              clsname = "Uncovered"
+              uncover = 0.85 
+            elif classNames[cls] == "Scarf":
+              uncover = 0.9 
+            elif classNames[cls] == "Mask":
+              uncover = 0.6 
+             
+            
 
-        return 0.85
+            
+  
+        # Check if any hands are detected
+        for hand in hands:
+                
+            # Information for the first hand detected
+            hand1 = hand  # Get the first hand detected
+            lmList1 = hand1["lmList"]  # List of 21 landmarks for the first hand
+            bbox1 = hand1["bbox"]  # Bounding box around the first hand (x,y,w,h coordinates)
+            center1 = hand1['center']  # Center coordinates of the first hand
+            handType1 = hand1["type"]  # Type of the first hand ("Left" or "Right")
+                
+                    
+            (x1, y1, w, h) = bbox1
+            x2 = x1 + w
+            y2 = y1 + h
+                
+            box_hand1 = [[x1, y1], [x1, y2], [x2, y2], [x2, y1]]
+                
+            polygon_hands = Polygon(box_hand1)
+            polygon_face = polygon_face - polygon_face.intersection(polygon_hands)
+
+
+            uncover = uncover * ( polygon_face.area / total_face_area )
+            if uncover < 0.95:
+              clsname = "Covered"
+            
+        
+        
+        
+        covered = (clsname=="Covered")
+
+        return covered
     
-    return 0.85  
+    return 1
       
-        
-
-
-def detect_eyes(img):
-    frame = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    # Detect faces in the image
-    faces = faceCascade.detectMultiScale(
-        frame,
-        scaleFactor=1.1,
-        minNeighbors=5,
-        minSize=(30, 30),
-        # flags = cv2.CV_HAAR_SCALE_IMAGE
-    )
+def draw_result(img):
+    results = model(img, stream=True, verbose=False)
+    hands, img = detector_hand.findHands(img, draw=False, flipType=True)
     
-    if len(faces) > 0:
+    
+    for r in results:
+        boxes = r.boxes
+        #print("Faces detected: ",len(boxes))
+        # cvzone.putTextRect(img, f'{len(boxes)} Faces', scale=2, thickness=4, colorR=(255,0,0), colorB=(255,0,0))
         
-        frame = frame[faces[0][1]:faces[0][1] + faces[0][3], faces[0][0]:faces[0][0] + faces[0][2]:1]
-        eyes = eyeCascade.detectMultiScale(
-            frame,
-            scaleFactor=1.1,
-            minNeighbors=5,
-            minSize=(30, 30),
-            # flags = cv2.CV_HAAR_SCALE_IMAGE
-        )
-        if len(eyes) == 0:
-            return 2 # closed eyes
-        else:
-            return 3 # open eyes
-    return 0 # no conclusion
+        x1, y1, x2, y2 = 0,0,0,0
+         
+        xf = x1
+        yf = y1
+        wf = 0
+        hf = 0
+        color = (0, 255, 0)
+        conf1 = 0
 
+    
+        box_face = [[x1, y1], [x1, y2], [x2, y2], [x2, y1]]
+        polygon_face = Polygon(box_face)
+        total_face_area = 1
+
+        uncover = 1
+        clsname = "Covered"
+        
+        if(len(boxes)>1):
+          img, bboxs = detector.findFaces(img,draw=True)
+          return img
+
+        if(len(boxes)==0):
+          img, bboxs = detector.findFaces(img,draw=True)
+          
+          for bbox in bboxs:
+            x,y,w,h = bbox["bbox"]
+                      
+            offsetPercentageW = 10
+            offsetPercentageH = 20
+            offsetW = (offsetPercentageW/100)*w
+            x = int(x - offsetW)
+            w = int(w + offsetW * 2)
+            
+            offsetH = (offsetPercentageH/100)*h
+            y = int(y - offsetH * 3)
+            h = int(h + offsetH * 4)
+            
+            # Ensure that x, y, w, and h stay within image dimensions
+            x = max(0, x)
+            y = max(0, y)
+            w = min(img.shape[1] - x, w)
+            h = min(img.shape[0] - y, h)
+            
+            x1 = x
+            y1 = y
+            x2 = x1 + w
+            y2 = y1 + h
+            
+            xf = x1
+            yf = y1
+            
+            uncover = 0.7
+            
+            box_face = [[x1, y1], [x1, y2], [x2, y2], [x2, y1]]
+            polygon_face = Polygon(box_face)
+            total_face_area = polygon_face.area
+            
+            # cvzone.cornerRect(img, (x,y,w,h), (255,0,0), 3)
+            
+            cvzone.cornerRect(img, (x, y, w, h),colorC=(0,0,255),colorR=(0,0,255))
+        
+        for box in boxes:
+            # Bounding Box
+            x1, y1, x2, y2 = box.xyxy[0]
+            x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+            # cv2.rectangle(img,(x1,y1),(x2,y2),(255,0,255),3)
+            w, h = x2 - x1, y2 - y1
+            # Confidence
+            conf = math.ceil((box.conf[0] * 100)) / 100
+            conf1 = conf
+            # Class Name
+            cls = int(box.cls[0])
+            color = (0, 255, 0)
+            
+            
+            xf = x1
+            yf = y1
+            wf = w
+            hf = h
+            
+            box_face = [[x1, y1], [x1, y2], [x2, y2], [x2, y1]]
+            polygon_face = Polygon(box_face)
+            total_face_area = polygon_face.area
+              
+            uncover = 1
+            clsname = "Covered"
+            
+            if classNames[cls] == "Uncovered":
+              clsname = "Uncovered"
+            elif classNames[cls] == "Spectacles":
+              clsname = "Uncovered"
+              uncover = 0.9 
+            elif classNames[cls] == "Helmet_and_Cap":
+              clsname = "Uncovered"
+              uncover = 0.85 
+            elif classNames[cls] == "Scarf":
+              uncover = 0.9 
+            elif classNames[cls] == "Mask":
+              uncover = 0.6 
+             
+            if clsname == "Covered":
+              color=(0,0,255)
+            
+  
+        # Check if any hands are detected
+        for hand in hands:
+                
+            # Information for the first hand detected
+            hand1 = hand  # Get the first hand detected
+            lmList1 = hand1["lmList"]  # List of 21 landmarks for the first hand
+            bbox1 = hand1["bbox"]  # Bounding box around the first hand (x,y,w,h coordinates)
+            center1 = hand1['center']  # Center coordinates of the first hand
+            handType1 = hand1["type"]  # Type of the first hand ("Left" or "Right")
+                
+                    
+            (x1, y1, w, h) = bbox1
+            x2 = x1 + w
+            y2 = y1 + h
+                
+            box_hand1 = [[x1, y1], [x1, y2], [x2, y2], [x2, y1]]
+                
+            polygon_hands = Polygon(box_hand1)
+            polygon_face = polygon_face - polygon_face.intersection(polygon_hands)
+
+
+            uncover = uncover * ( polygon_face.area / total_face_area )
+            if uncover < 0.95:
+              clsname = "Covered"
+            
+        if clsname == "Covered":
+          color=(0,0,255)
+        
+        cvzone.cornerRect(img, (xf, yf, wf, hf),colorC=color,colorR=color)
+        cvzone.putTextRect(img, f'{clsname}',
+                               (max(0, xf), max(35, yf)), scale=2, thickness=4,colorR=color,
+                               colorB=color)
+        
+        return img
+    
+    return img
 
 def convert_from_base64(encoded_string):
     try:
@@ -144,10 +298,6 @@ def convert_to_base64(img):
 def combined(encoded_string): 
     """Main function"""
 
-    #Offset percentages of all the bounding boxes
-
-    offsetPercentageW = 5
-    offsetPercentageH = 2.5
     img = convert_from_base64(encoded_string)
     
     if img is not None:
@@ -162,78 +312,23 @@ def combined(encoded_string):
         
         # Only proceed when there is only 1 face
         if(len(bboxs) == 1):
-            bbox = bboxs[0]
-            x,y,w,h = bbox["bbox"]
-            
-            # Set the offset for the face's bounding box
-            offsetW = (offsetPercentageW/100)*w
-            xp = int(x - offsetW)
-            wp = int(w + 2*offsetW)
-            offsetH = (offsetPercentageH/100)*h
-            yp = int(y - offsetH * 6)
-            hp = int(h + offsetH * 6)
-            
-            # Ensure that x, y, w, and h stay within image dimensions
-            xp = max(0, xp)
-            yp = max(0, yp)
-            wp = min(img.shape[1] - xp, wp)
-            hp = min(img.shape[0] - yp, hp)
-            
-            
-            offsetPercentageW = 10
-            offsetPercentageH = 15
-            
-            offsetW = (offsetPercentageW/100)*w
-            x = int(x - offsetW)
-            w = int(w + offsetW * 2)
-            
-            offsetH = (offsetPercentageH/100)*h
-            y = int(y - offsetH * 3)
-            h = int(h + offsetH * 4)
-            
-            # Ensure that x, y, w, and h stay within image dimensions
-            x = max(0, x)
-            y = max(0, y)
-            w = min(img.shape[1] - x, w)
-            h = min(img.shape[0] - y, h)
-            
-            # cv2.rectangle(img, (x,y,w,h), (255,0,0), 3)
-            
-            cropped_face = img[y:y+h, x:x+w]
-            vision_img = np.array(cropped_face)
-            type(vision_img)
-            rgb_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=vision_img)
-            detection_result = detector_.detect(rgb_image)
-            cover_ratio = visualize(detection_result)
-            cover_ratio2 = coverratio(img)
-            if(cover_ratio2 != -1):
-                cover_ratio = (cover_ratio + cover_ratio2)/2
-            blink = detect_eyes(img)
-                
-            # Resize the raw image into (224-height,224-width) pixels
-            image = cv2.resize(cropped_face, (224, 224), interpolation=cv2.INTER_AREA)
-            # Make the image a numpy array and reshape it to the models input shape.
-            image = np.asarray(image, dtype=np.float32).reshape(1, 224, 224, 3)
-            # Normalize the image array
-            image = (image / 127.5) - 1
-            
-            # Predicts the model
-            prediction = model.predict(image)
-            cls = np.argmax(prediction)
-            confidence_score = prediction[0][cls]
-            
-            
-            live_percentage = confidence_score
-            if classNames[cls]=='Spoof':
-                live_percentage = 1-confidence_score
-            
-            color = (0, 255, 0)
-            
-            cvzone.cornerRect(img, (xp, yp, wp, hp),colorC=color,colorR=color)
-
-            live_percentage = round(live_percentage, 4)
+           
+            cover_ratio = cover_result(img)
+            live_percentage = -1
             cover_ratio = round(cover_ratio, 4)
-            return (convert_to_base64(img), blink, live_percentage, cover_ratio)
+            return (convert_to_base64(img), 0, live_percentage, cover_ratio)
 
     
     return (encoded_string, 0, -1, -1)
+
+def realtime(encoded_string):
+    
+    img = convert_from_base64(encoded_string)
+
+    if img is not None:
+       
+       img = draw_result(img)
+       return convert_to_base64(img)
+    
+    return encoded_string
+    

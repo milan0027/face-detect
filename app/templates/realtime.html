@@ -5,8 +5,14 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Face Detector</title>
-    <link rel="icon" href="{{ url_for('static',filename='logo/favicon.png') }}" />
-    <link href="{{ url_for('static',filename='stylesheets/index.css') }}" rel="stylesheet" />
+    <link
+      rel="icon"
+      href="{{ url_for('static',filename='logo/favicon.png') }}"
+    />
+    <link
+      href="{{ url_for('static',filename='stylesheets/index.css') }}"
+      rel="stylesheet"
+    />
     <link
       rel="stylesheet"
       href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"
@@ -53,11 +59,14 @@
     </nav>
 
     <main class="container mt-3">
+      <div class="stream-btns">
+        <button class="stream-btn" id="startStream" disabled>Start</button>
+        <button class="stream-btn" id="stopStream" disabled>Stop</button>
+      </div>
       <div class="row">
-        
-          <div class="homepage-btn">
-           <a href="/client"><button class="opt-btn">Go As Client</button></a> 
-          </div>
+        <div class="col">
+            <img id="image" width="640" height="480" />
+        </div>
       </div>
     </main>
 
@@ -71,5 +80,11 @@
       integrity="sha384-cn7l7gDp0eyniUwwAZgrzD06kc/tftFf19TOAs2zVinnD/C7E91j9yyk5//jjpt/"
       crossorigin="anonymous"
     ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+      integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+      crossorigin="anonymous"
+    ></script>
+    <script src="{{ url_for('static',filename='javascripts/realtime.js') }}"></script>
   </body>
 </html>
