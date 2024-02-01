@@ -1,7 +1,6 @@
 """Flask app for hosting. This should be used for production purposes"""
-from flask import Flask, request, jsonify, render_template,  redirect
+from flask import Flask, request, jsonify, render_template
 from flask_socketio import SocketIO, join_room, leave_room
-from flask_celery import make_celery
 from flask_swagger_ui import get_swaggerui_blueprint
 from code4 import combined, realtime
 import eventlet
@@ -11,13 +10,7 @@ eventlet.monkey_patch()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'there is no secret'
 
-# app.config.update takes the following parameters:
-# CELERY_BROKER_URL is the URL where the message broker is running
-# CELERY_RESULT_BACKEND is required to keep track of task and store the status
-app.config.update(
-CELERY_BROKER_URL = 'redis://localhost:6379/0',
-CELERY_RESULT_BACKEND='redis://localhost:6379/0'
-)
+
 
 # integrates Flask-SocketIO with the Flask application
 socketio = SocketIO(app, message_queue='redis://localhost:6379/0')
@@ -34,8 +27,6 @@ swagger_ui_blueprint = get_swaggerui_blueprint(
 )
 
 app.register_blueprint(swagger_ui_blueprint, url_prefix=SWAGGER_URL)
-# the app is passed to meke_celery function, this function sets up celery in order to integrate with the flask application
-celery = make_celery(app)
 
 @app.route('/')
 def homepage():
@@ -75,7 +66,6 @@ def test_disconnect():
 
 @socketio.on('join')
 def on_join(data):
-    usertype = data['usertype']
     room = data['room']
     join_room(room)
 
@@ -86,15 +76,14 @@ def on_leave(data):
 
 @socketio.on('frameinput1')
 def on_frameinput1(data):
-    emit_function1.delay(data)
+    emit_function1(data)
 
 @socketio.on('realtimein')
 def on_realtimein(data):
-    emit_realtime.delay(data)
+    emit_realtime(data)
 
-@celery.task()
+
 def emit_function1(data):
-    local_socketio = SocketIO(message_queue='redis://localhost:6379/0')
     base64_data = data['image_data_url']
     room = data['room']
     multiple_face = 0
@@ -107,13 +96,12 @@ def emit_function1(data):
     
     data1 = {'multiple_face': str(multiple_face), 'live_confidence': str(live_confidence), 'cover_ratio': str(cover_ratio)} 
     try:
-        local_socketio.emit('frameoutput1', data1, to=room)  
+        socketio.emit('frameoutput1', data1, to=room)  
     except Exception as e:
         print(e)
 
-@celery.task()
+
 def emit_realtime(data):
-    local_socketio = SocketIO(message_queue='redis://localhost:6379/0')
     base64_data = data['image_data_url']
     room = data['room']
     try:
@@ -124,7 +112,7 @@ def emit_realtime(data):
     data1 = {'image_data_url': base64_data}
 
     try:
-        local_socketio.emit('realtimeout', data1, to = room)
+        socketio.emit('realtimeout', data1, to = room)
     except Exception as e:
         print(e)
 

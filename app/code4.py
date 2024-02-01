@@ -146,7 +146,7 @@ def draw_result(img):
           return img
 
         if(len(boxes)==0):
-          img, bboxs = detector.findFaces(img,draw=True)
+          img, bboxs = detector.findFaces(img,draw=False)
           
           for bbox in bboxs:
             x,y,w,h = bbox["bbox"]
@@ -181,7 +181,7 @@ def draw_result(img):
             polygon_face = Polygon(box_face)
             total_face_area = polygon_face.area
             
-            # cvzone.cornerRect(img, (x,y,w,h), (255,0,0), 3)
+            cvzone.cornerRect(img, (x,y,w,h), (255,0,0), 3)
             
             cvzone.cornerRect(img, (x, y, w, h),colorC=(0,0,255),colorR=(0,0,255))
         
