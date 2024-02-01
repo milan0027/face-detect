@@ -3,19 +3,12 @@ This approach gives better results on average than approach 1 and handles variou
 #Imports
 import cvzone
 import numpy as np
-import tensorflow as tf
 import base64
 from ultralytics import YOLO
-from cvzone.FaceDetectionModule import FaceDetector
 import cv2
-
-from ultralytics import YOLO
-import time
 import math
-import cvzone
 from cvzone.FaceDetectionModule import FaceDetector
 from cvzone.HandTrackingModule import HandDetector
-import shapely
 from shapely.geometry import Polygon
 # Loading all the models
 detector = FaceDetector()

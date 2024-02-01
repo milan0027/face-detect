@@ -46,7 +46,7 @@ def clientpage():
     return render_template('client.html')
 
 @app.route('/realtime')
-def clientpage():
+def realtimepage():
     return render_template('realtime.html')
 
 @app.route('/predict', methods=['POST'])
@@ -90,7 +90,7 @@ def on_frameinput1(data):
 
 @socketio.on('realtimein')
 def on_realtimein(data):
-    emit_realtime(data)
+    emit_realtime.delay(data)
 
 @celery.task()
 def emit_function1(data):
