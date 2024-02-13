@@ -9,7 +9,6 @@ const timeinput = document.getElementById('time-input');
 const timetext = document.getElementById('time-text');
 const timevalue = document.getElementById('time-value');
 const resultinfo = document.getElementById('result-info');
-const liveavg = document.getElementById('live-avg');
 const multifaceavg = document.getElementById('multiface-avg');
 const coveravg = document.getElementById('cover-avg');
 const uncoveravg = document.getElementById('uncover-avg');
@@ -26,10 +25,8 @@ if (!mediaDevices || !mediaDevices.getUserMedia) {
   canvas.setAttribute('height', FRAME_HEIGHT);
 }
 
-let live_array = []
 let cover_array = []
 let multiface_array = []
-let blink_array = []
 let tid = -1
 let room = '';
 socket.on('connect', () => {
@@ -39,22 +36,15 @@ socket.on('connect', () => {
 
 //handle incoming data from server for each frame
 socket.on('frameoutput1', (data) => {
-    let liveliness = data['live_confidence']
     let multiface = data['multiple_face']
     let cover = data['cover_ratio']
-    live_array.push(liveliness)
     cover_array.push(cover)
-    if (multiface == '2')
-        blink_array.push('0')
-    else if (multiface == '3')
-        blink_array.push('1')
     
     if(multiface == '1')
         multiface_array.push(multiface)
     else
         multiface_array.push('0')
 
-    
     if(tid != -1){
         clearTimeout(tid)
         tid = setTimeout(processResults, 2000);
@@ -66,14 +56,11 @@ socket.on('frameoutput1', (data) => {
 startStream.addEventListener("click", async () => {
   let count = 0;
   tid = -1;
-  live_array = [];
-  blink_array = [];
   multiface_array = [];
   cover_array = [];
   resultinfo.style.display = 'none';
   timetext.innerHTML='Time Elapsed (sec): ';
   timevalue.innerHTML='0';
-  liveavg.innerHTML='Not Defined';
   multifaceavg.innerHTML = 'Not Defined';
   coveravg.innerHTML = 'Not Defined';
   uncoveravg.innerHTML = 'Not Defined';
@@ -141,15 +128,6 @@ const accurateTimer = (fn, time = 1000) => {
 
 function processResults(){
     resultinfo.style.display = 'block'
-    if(blink(blink_array) == 1)
-        liveavg.innerHTML = '100%';
-    else{
-        let liveliness = average(live_array)
-        if(liveliness != -1){
-            liveliness = Math.round(liveliness*10000)/100
-            liveavg.innerHTML = liveliness + '%';
-        }
-    }
     
     let multiface = average(multiface_array)
     let cover = average(cover_array)
@@ -182,24 +160,6 @@ function average(arr){
         return poss
     
     return avg/arr.length
-}
-
-function blink(arr){
-
-    let count0 = 0
-    let count1 = 0
-    arr.forEach(e => {
-        if(e == '0')
-        count0 += 1
-        else
-        count1 += 1
-    });
-       
-
-    if(count0 > 0 && count1 > 0)
-        return 1
-
-    return 0  
 }
 
 function isNumericString(input) {  

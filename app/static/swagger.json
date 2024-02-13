@@ -27,6 +27,17 @@
         }
       }
     },
+    "/realtime": {
+      "get": {
+        "description": "Returns realtime page html for seeing results with bounding boxes",
+        "produces": ["text/html"],
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          }
+        }
+      }
+    },
     
       "/predict": {
         "post": {
@@ -54,19 +65,13 @@
           ],
           "responses": {
             "200": {
-              "description": "Result processed successfully\nresult: base64 encoded output image frame\nmultiple_face: [1] signifies multiple faces, [0,2,3] signifies single face, [2] signifies closed eyes, [3] signifies open eyes\nlive_confidence: value between 0 to 1, value of -1 signifies live confidence was not calculated\ncover_ratio: value between 0 and 1, value of -1 signifies cover ratio was not calculated",
+              "description": "Result processed successfully\nmultiple_face: [1] signifies multiple faces, [0] signifies single face\ncover_ratio: value of 0 or 1, value of -1 signifies cover ratio was not calculated",
               "content": {
                 "application/json": {
                   "schema": {
                     "type": "object",
                     "properties": {
-                      "result": {
-                        "type": "string"
-                      },
                       "multiple_face": {
-                        "type": "string"
-                      },
-                      "live_confidence": {
                         "type": "string"
                       },
                       "cover_ratio": {
@@ -74,10 +79,8 @@
                       }
                     },
                     "example": {
-                      "result": "dA34oXd9u3...(in base64)",
                       "multiple_face": "0",
-                      "live_confidence": "0.7589",
-                      "cover_ratio": "0.1221"
+                      "cover_ratio": "1"
                     }
                   }
                 }

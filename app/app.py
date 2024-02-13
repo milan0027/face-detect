@@ -2,7 +2,7 @@
 from flask import Flask, request, jsonify, render_template
 from flask_socketio import SocketIO, join_room, leave_room
 from flask_swagger_ui import get_swaggerui_blueprint
-from code4 import combined, realtime
+from code5 import combined, realtime
 import eventlet
 eventlet.monkey_patch()  
 
@@ -12,7 +12,7 @@ app.config['SECRET_KEY'] = 'there is no secret'
 
 
 
-# integrates Flask-SocketIO with the Flask application
+# integrates Flask-SocketIO with the Flask application and redis message queue
 socketio = SocketIO(app, message_queue='redis://localhost:6379/0')
 
 SWAGGER_URL="/swagger"
@@ -44,16 +44,14 @@ def realtimepage():
 def predict():
     data = request.get_json(force = True)
     base64_data = data['image_data_url']
-    result = base64_data
     multiple_face = 0
-    live_confidence = -1
     cover_ratio = -1
     try:
-        result, multiple_face, live_confidence, cover_ratio = combined(base64_data)
+        multiple_face, cover_ratio = combined(base64_data)
     except Exception as e:
         print(e)
     
-    data1 = {'result': result, 'multiple_face': multiple_face, 'live_confidence': str(live_confidence), 'cover_ratio': str(cover_ratio)}
+    data1 = {'multiple_face': str(multiple_face),'cover_ratio': str(cover_ratio)}
     return jsonify(data1)
 
 @socketio.on('connect')
@@ -87,19 +85,17 @@ def emit_function1(data):
     base64_data = data['image_data_url']
     room = data['room']
     multiple_face = 0
-    live_confidence = -1
     cover_ratio = -1
     try:
-        _, multiple_face, live_confidence, cover_ratio = combined(base64_data)
+        multiple_face, cover_ratio = combined(base64_data)
     except Exception as e:
         print(e)
     
-    data1 = {'multiple_face': str(multiple_face), 'live_confidence': str(live_confidence), 'cover_ratio': str(cover_ratio)} 
+    data1 = {'multiple_face': str(multiple_face), 'cover_ratio': str(cover_ratio)} 
     try:
         socketio.emit('frameoutput1', data1, to=room)  
     except Exception as e:
         print(e)
-
 
 def emit_realtime(data):
     base64_data = data['image_data_url']

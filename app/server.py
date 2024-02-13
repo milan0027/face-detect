@@ -1,6 +1,6 @@
 """Flask app for local server. This should be used for development purposes. Also integrates swagger ui"""
-from flask import Flask, request, jsonify, render_template,  redirect
-from code4 import combined, realtime
+from flask import Flask, request, jsonify, render_template
+from code5 import combined, realtime
 from flask_socketio import SocketIO, join_room, leave_room
 from flask_swagger_ui import get_swaggerui_blueprint
 
@@ -35,16 +35,14 @@ def realtimepage():
 def predict():
     data = request.get_json(force = True)
     base64_data = data['image_data_url']
-    result = base64_data
     multiple_face = 0
-    live_confidence = -1
     cover_ratio = -1
     try:
-        result, multiple_face, live_confidence, cover_ratio = combined(base64_data)
+        multiple_face, cover_ratio = combined(base64_data)
     except Exception as e:
         print(e)
     
-    data1 = {'result': result, 'multiple_face': str(multiple_face), 'live_confidence': str(live_confidence), 'cover_ratio': str(cover_ratio)}
+    data1 = {'multiple_face': str(multiple_face),'cover_ratio': str(cover_ratio)}
     return jsonify(data1)
 
 @socketio.on('connect')
@@ -57,7 +55,6 @@ def test_disconnect():
 
 @socketio.on('join')
 def on_join(data):
-    usertype = data['usertype']
     room = data['room']
     join_room(room)
 
@@ -80,14 +77,13 @@ def emit_function1(data):
     base64_data = data['image_data_url']
     room = data['room']
     multiple_face = 0
-    live_confidence = -1
     cover_ratio = -1
     try:
-        _, multiple_face, live_confidence, cover_ratio = combined(base64_data)
+        multiple_face, cover_ratio = combined(base64_data)
     except Exception as e:
         print(e)
     
-    data1 = {'multiple_face': str(multiple_face), 'live_confidence': str(live_confidence), 'cover_ratio': str(cover_ratio)} 
+    data1 = {'multiple_face': str(multiple_face), 'cover_ratio': str(cover_ratio)} 
     try:
         socketio.emit('frameoutput1', data1, to=room)  
     except Exception as e:
