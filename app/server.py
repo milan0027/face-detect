@@ -1,6 +1,6 @@
 """Flask app for local server. This should be used for development purposes. Also integrates swagger ui"""
 from flask import Flask, request, jsonify, render_template
-from code5 import combined, realtime
+#from code5 import combined, realtime
 from flask_socketio import SocketIO, join_room, leave_room
 from flask_swagger_ui import get_swaggerui_blueprint
 
@@ -30,6 +30,10 @@ def clientpage():
 @app.route('/realtime')
 def realtimepage():
     return render_template('realtime.html')
+
+@app.route('/upload')
+def uploadpage():
+    return render_template('upload.html')
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -79,7 +83,7 @@ def emit_function1(data):
     multiple_face = 0
     cover_ratio = -1
     try:
-        multiple_face, cover_ratio = combined(base64_data)
+        pass#multiple_face, cover_ratio = combined(base64_data)
     except Exception as e:
         print(e)
     
@@ -93,7 +97,7 @@ def emit_realtime(data):
     base64_data = data['image_data_url']
     room = data['room']
     try:
-       base64_data = realtime(base64_data)
+       pass#base64_data = realtime(base64_data)
     except Exception as e:
        print(e)
 
