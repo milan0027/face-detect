@@ -1,12 +1,13 @@
 //client side code for emitting stream to server
 //see how to install opencv4nodejs at https://www.npmjs.com/package/opencv4nodejs
 //run - 'npm install' to install all dependencies
-//run - 'node client.js time=7' to start the code, here time is duration in seconds of stream
+//run - 'node client.js time=7 fps=2' to start the code, here time is duration in seconds of stream
+// and fps is frames per second
 const { io } = require("socket.io-client");
 const cv = require('opencv4nodejs');
 const SERVER_URL = 'http://localhost:5000';
 const socket = io(SERVER_URL);
-const FRAME_RATE = 2
+let FRAME_RATE = 2
 let DURATION = 7 //default duration in seconds
 let room = '';
 socket.on('connect', () => {
@@ -14,12 +15,18 @@ socket.on('connect', () => {
     room = socket.id;
 })
 
-//get duration from command line
+//get duration and fps from command line
 process.argv.forEach( (val) => {
     if(val.startsWith('time=')){
         let duration = val.replace('time=','')
         if(isNumericString(duration))
         DURATION = duration*1
+    }
+
+    if(val.startsWith('fps=')){
+        let fps = val.replace('fps=','')
+        if(isNumericString(fps))
+        FRAME_RATE = fps*1
     }
 } )
 //open camera using opencv

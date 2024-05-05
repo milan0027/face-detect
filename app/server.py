@@ -1,6 +1,6 @@
 """Flask app for local server. This should be used for development purposes. Also integrates swagger ui"""
 from flask import Flask, request, jsonify, render_template
-from code5 import combined, realtime
+from code5 import combined, realtime, mixed
 from flask_socketio import SocketIO, join_room, leave_room
 from flask_swagger_ui import get_swaggerui_blueprint
 
@@ -30,6 +30,10 @@ def clientpage():
 @app.route('/realtime')
 def realtimepage():
     return render_template('realtime.html')
+
+@app.route('/mixed')
+def mixedpage():
+    return render_template('mixed.html')
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -72,6 +76,10 @@ def on_frameinput1(data):
 def on_realtimein(data):
     emit_realtime(data)
 
+@socketio.on('mixedin')
+def on_mixedin(data):
+    emit_mixed(data)
+
 
 def emit_function1(data):
     base64_data = data['image_data_url']
@@ -103,6 +111,23 @@ def emit_realtime(data):
         socketio.emit('realtimeout', data1, to = room)
     except Exception as e:
         print(e)
+
+def emit_mixed(data):
+    base64_data = data['image_data_url']
+    room = data['room']
+    multiple_face = 0
+    cover_ratio = -1
+    try:
+        base64_data, multiple_face, cover_ratio = mixed(base64_data)
+    except Exception as e:
+        print(e)
+    
+    data1 = {'image_data_url':base64_data,'multiple_face': str(multiple_face), 'cover_ratio': str(cover_ratio)} 
+    try:
+        socketio.emit('mixedout', data1, to=room)  
+    except Exception as e:
+        print(e)
+
 
 if __name__ == '__main__':
     socketio.run(app,debug=False)

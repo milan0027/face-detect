@@ -1,7 +1,8 @@
 //client side js file for handling socket connections to server and processing results
 const socket = io({ transports: ['websocket'] });
 const startStream = document.getElementById("startStream");
-const video = document.querySelector("video");
+const image = document.getElementById("image");
+const video = document.createElement("video");
 const canvas = document.createElement("canvas");
 const mediaDevices = navigator.mediaDevices;
 const frameinput = document.getElementById('frame-rate');
@@ -35,9 +36,13 @@ socket.on('connect', () => {
 })
 
 //handle incoming data from server for each frame
-socket.on('frameoutput1', (data) => {
+socket.on('mixedout', (data) => {
+
+    image.src = `data:image/jpg;base64,${data.image_data_url}`;
+
     let multiface = data['multiple_face']
     let cover = data['cover_ratio']
+    
     cover_array.push(cover)
     
     if(multiface == '1')
@@ -80,7 +85,7 @@ startStream.addEventListener("click", async () => {
     canvas.getContext("2d").drawImage(video, 0, 0);
     const image_data_url = canvas.toDataURL("image/jpg");
     const base64_data = image_data_url.split(',')[1];
-    socket.emit('frameinput1', {image_data_url:base64_data, room})
+    socket.emit('mixedin', {image_data_url:base64_data, room})
   }, 1000/FRAME_RATE);
 
   setTimeout(() => {
